@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+    <!--    配置Monster对象
+       1.class属性指定类的全路径-底层使用全路径
+       2.id属性表示java对象在Spring容器中的id，通过id可以获取到对象
+       3.<property name="name" value="牛魔王"/>用于给对象的属性赋值
+       -->
+    <bean class="com.wpt.spring.bean.Monster" id="monster01">
+        <property name="monsterId" value="100"></property>
+        <property name="name" value="牛魔王"/>
+        <property name="kill" value="芭蕉扇"/>
+    </bean>
+</beans>
