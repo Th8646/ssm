@@ -12,4 +12,9 @@
         <property name="name" value="牛魔王"/>
         <property name="kill" value="芭蕉扇"/>
     </bean>
+    <bean class="com.wpt.spring.bean.Monster" id="monster02">
+        <property name="monsterId" value="1001"></property>
+        <property name="name" value="牛魔王223"/>
+        <property name="kill" value="芭蕉扇222"/>
+    </bean>
 </beans>
