@@ -1,20 +1,174 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/util https://www.springframework.org/schema/util/spring-util.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+    <!--    指定属性文件位置-->
+    <context:property-placeholder location="classpath:my.properties"/>
+    <!--    配置Monster对象-->
+    <bean class="com.wpt.spring.bean.Monster" id="monster1000">
+        <property name="monsterId" value="${monsterID}"/>
+        <property name="name" value="${name}"/>
+        <property name="kill" value="${kill}"/>
+    </bean>
+
+    <!-- 演示Bean的生命周期 -->
+    <!--
+    1. init-method="init" 指定bean的初始化方法，在setter方法后执行
+    2. 方法执行的时机，由Spring容器控制
+    3. destroy-method="destroy" 指定bean的销毁方法，在容器关闭时执行
+    4. 方法执行的时机，由Spring容器控制
+    -->
+
+    <bean class="com.wpt.spring.bean.House" id="house"
+          init-method="init" destroy-method="destroy">
+        <property name="name" value="北京豪宅"/>
+    </bean>
+
+
+    <!--   配置Cat对象-->
+    <!--    1.在默认情况下，scope属性是  singleton  在IoC容器中，只有一个bean对象-->
+    <!--    2.每次执行getBean返回的都是同一个对象-->
+    <!--    3.如果希望每次返回的都不是同一个对象，可以配置scope-->
+    <bean id="cat" class="com.wpt.spring.bean.Cat" scope="prototype">
+        <property name="name" value="小花猫"/>
+        <property name="id" value="100"/>
+    </bean>
+
     <!--    配置Monster对象
        1.class属性指定类的全路径-底层使用全路径
        2.id属性表示java对象在Spring容器中的id，通过id可以获取到对象
        3.<property name="name" value="牛魔王"/>用于给对象的属性赋值
        -->
-    <bean class="com.wpt.spring.bean.Monster" id="monster01">
-        <property name="monsterId" value="100"></property>
+    <bean class="com.wpt.spring.bean.Student" id="student" depends-on="department"/>
+    <bean class="com.wpt.spring.bean.Department" id="department"/>
+    <bean id="monster10" class="com.wpt.spring.bean.Monster">
+        <property name="monsterId" value="100"/>
         <property name="name" value="牛魔王"/>
         <property name="kill" value="芭蕉扇"/>
     </bean>
-    <bean class="com.wpt.spring.bean.Monster" id="monster02">
-        <property name="monsterId" value="1001"></property>
-        <property name="name" value="牛魔王223"/>
-        <property name="kill" value="芭蕉扇222"/>
+    <!--    配置Monster对象，但是对象的属性值和id=monster10的一样-->
+    <bean parent="monster10" class="com.wpt.spring.bean.Monster"/>
+    <!--    配置Monster对象，通过FactoryBean来获取-->
+    <bean id="my_monster05" class="com.wpt.spring.factory.MyFactoryBean">
+        <property name="key" value="monster03"/>
+    </bean>
+
+    <!--    配置Monster对象，通过实例工厂获取-->
+    <bean id="myInstanceFactory" class="com.wpt.spring.factory.MyInstanceFactory"/>
+    <bean id="my_monster02" factory-method="getMonster" factory-bean="myInstanceFactory">
+        <constructor-arg value="monster03"></constructor-arg>
+    </bean>
+
+    <!--    配置Monster对象，通过静态工厂获取-->
+    <bean class="com.wpt.spring.factory.MyStaticFactory" id="myStaticBean" factory-method="getMonster">
+        <constructor-arg value="monster02"/>
+    </bean>
+    <!--    配置dept对象-->
+    <bean class="com.wpt.spring.bean.Dept" id="dept"/>
+    <!--    配置employee对象-->
+    <bean class="com.wpt.spring.bean.Employee" id="employee">
+        <property name="name" value="jack"/>
+        <property name="dept" ref="dept"/>
+        <property name="dept.name" value="研发部"/>
+    </bean>
+
+    <!--    配置BookStore-->
+    <!--    定义一个util：list-->
+    <util:list id="bookList">
+        <value>三国演义</value>
+        <value>水浒传</value>
+        <value>红楼梦</value>
+        <value>西游记</value>
+    </util:list>
+    <bean class="com.wpt.spring.bean.BookStore" id="bookStore">
+        <property name="bookList" ref="bookList"/>
+    </bean>
+    <!--    配置memberService对象  使用内部bean-->
+    <bean class="com.wpt.spring.service.MemberServiceImpl" id="memberService2">
+        <property name="memberDao">
+            <bean class="com.wpt.spring.dao.MemberDaoImpl"/>
+        </property>
+    </bean>
+    <!--   配置monster，通过类型获取-->
+    <bean class="com.wpt.spring.bean.Monster" id="monster">
+        <property name="monsterId" value="100"/>
+        <property name="name" value="牛魔王"/>
+        <property name="kill" value="芭蕉扇"/>
+    </bean>
+
+    <bean class="com.wpt.spring.bean.Monster" id="monster03">
+        <constructor-arg value="200" index="0"/>
+        <constructor-arg value="白骨精" index="1"/>
+        <constructor-arg value="吸人血" index="2"/>
+        <!--        <constructor-arg value="200" type="java.lang.Integer"/>-->
+        <!--        <constructor-arg value="白骨精" type="java.lang.String"/>-->
+        <!--        <constructor-arg value="吸人血" type="java.lang.String"/>-->
+    </bean>
+
+    <bean class="com.wpt.spring.bean.Monster" id="monster06"
+          p:monsterId="500"
+          p:name="红孩儿"
+          p:kill="吐火"
+    />
+    <!--    配置memberDao对象-->
+    <bean class="com.wpt.spring.dao.MemberDaoImpl" id="memberDao"/>
+    <!--    配置memberService对象-->
+    <!--    ref = "memberDao" 表示 memberService 对象属性 memberDao 引用的对象是 id = memberDao 的对象-->
+    <bean class="com.wpt.spring.service.MemberServiceImpl" id="memberService">
+        <property name="memberDao" ref="memberDao"/>
+    </bean>
+    <!--    配置Master对象-->
+    <bean class="com.wpt.spring.bean.Master" id="master">
+        <property name="name" value="太上老君"/>
+        <property name="monsterList">
+            <list>
+                <ref bean="monster03"/>
+                <ref bean="monster06"/>
+                <bean class="com.wpt.spring.bean.Monster" id="monster2">
+                    <property name="name" value="老鼠精"/>
+                    <property name="kill" value="吃粮食"/>
+                    <property name="monsterId" value="100"/>
+                </bean>
+            </list>
+        </property>
+        <property name="monsterMap">
+            <map>
+                <entry>
+                    <key>
+                        <value>monster001</value>
+                    </key>
+                    <ref bean="monster03"/>
+                </entry>
+                <entry>
+                    <key>
+                        <value>monster002</value>
+                    </key>
+                    <ref bean="monster"/>
+                </entry>
+                <entry>
+                    <key>
+                        <value>monster003</value>
+                    </key>
+                    <ref bean="monster06"/>
+                </entry>
+            </map>
+        </property>
+
+        <property name="monsterName">
+            <array>
+                <value>小妖怪</value>
+                <value>大妖怪</value>
+                <value>老妖怪</value>
+            </array>
+        </property>
+        <property name="pros">
+            <props>
+                <prop key="username">root</prop>
+                <prop key="password">123456</prop>
+                <prop key="ip">127.0.0.1</prop>
+            </props>
+        </property>
     </bean>
 </beans>

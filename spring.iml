@@ -5,6 +5,8 @@
       <configuration>
         <fileset id="fileset" name="Beans" removed="false">
           <file>file://$MODULE_DIR$/src/beans.xml</file>
+          <file>file://$MODULE_DIR$/src/beans02.xml</file>
+          <file>file://$MODULE_DIR$/src/beans03.xml</file>
         </fileset>
       </configuration>
     </facet>
@@ -28,5 +30,7 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="dom4j-1.6.1" level="project" />
+    <orderEntry type="library" name="spring-aop-5.3.8" level="project" />
   </component>
 </module>

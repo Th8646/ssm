@@ -3,12 +3,13 @@ package com.wpt.spring.test;/**
  * @date 2024/7/18 1:07
  */
 
-import com.wpt.spring.bean.Monster;
+import com.wpt.spring.bean.*;
+import com.wpt.spring.service.MemberServiceImpl;
+import com.wpt.spring.web.OrderAction;
 import org.junit.Test;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import java.io.File;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @projectName: spring
@@ -20,6 +21,147 @@ import java.util.concurrent.ConcurrentHashMap;
  * @version: 1.0
  */
 public class SpringBeanTest {
+
+    @Test
+    public void setBeanByAutowire(){
+        ClassPathXmlApplicationContext ioc = new ClassPathXmlApplicationContext("beans03.xml");
+        OrderAction orderAction = ioc.getBean("orderAction", OrderAction.class);
+        System.out.println(orderAction);
+        System.out.println(orderAction.getOrderService());
+    }
+    @Test
+    public void setBeanByFile() {
+        ClassPathXmlApplicationContext ioc = new ClassPathXmlApplicationContext("beans.xml");
+        Monster monster1000 = ioc.getBean("monster1000", Monster.class);
+        System.out.println("monster1000 = " + monster1000);
+    }
+
+    @Test
+    public void testBeanPostProcessor() {
+        ClassPathXmlApplicationContext ioc = new ClassPathXmlApplicationContext("beans02.xml");
+        House house = ioc.getBean("house", House.class);
+        System.out.println("use  House = " + house);
+    }
+
+    @Test
+    public void testBeanLife() {
+        ClassPathXmlApplicationContext ioc = new ClassPathXmlApplicationContext("beans.xml");
+        House house = ioc.getBean("house", House.class);
+        System.out.println("house = " + house);
+
+        // 关闭容器
+        ioc.close();
+    }
+
+    @Test
+    public void testBeanScope() {
+        ClassPathXmlApplicationContext ioc = new ClassPathXmlApplicationContext("beans.xml");
+        Cat cat = ioc.getBean("cat", Cat.class);
+        Cat cat2 = ioc.getBean("cat", Cat.class);
+        Cat cat3 = ioc.getBean("cat", Cat.class);
+        System.out.println(cat);
+        System.out.println(cat2);
+        System.out.println(cat3);
+    }
+
+    @Test
+    public void beanCreatedOrder() {
+        ClassPathXmlApplicationContext ioc = new ClassPathXmlApplicationContext("beans.xml");
+        Student student = ioc.getBean("student", Student.class);
+        System.out.println(student);
+    }
+
+    @Test
+    public void setBeanByFactoryBean() {
+        ClassPathXmlApplicationContext ioc = new ClassPathXmlApplicationContext("beans.xml");
+        Monster myStaticBean = ioc.getBean("my_monster05", Monster.class);
+        System.out.println(myStaticBean);
+    }
+
+    @Test
+    public void setBeanByInstanceFactory() {
+        ClassPathXmlApplicationContext ioc = new ClassPathXmlApplicationContext("beans.xml");
+        Monster myStaticBean = ioc.getBean("my_monster02", Monster.class);
+        System.out.println(myStaticBean);
+    }
+
+    @Test
+    public void setBeanByStaticFactory() {
+        ClassPathXmlApplicationContext ioc = new ClassPathXmlApplicationContext("beans.xml");
+        Monster myStaticBean = ioc.getBean("myStaticBean", Monster.class);
+        System.out.println(myStaticBean);
+    }
+
+    @Test
+    public void setBeanByRelation() {
+        ClassPathXmlApplicationContext ioc = new ClassPathXmlApplicationContext("beans.xml");
+        Employee employee = ioc.getBean("employee", Employee.class);
+        System.out.println(employee);
+    }
+
+    @Test
+    public void setBeanByUtils() {
+        ClassPathXmlApplicationContext ioc = new ClassPathXmlApplicationContext("beans.xml");
+        BookStore bookStore = ioc.getBean("bookStore", BookStore.class);
+        System.out.println(bookStore);
+    }
+
+    @Test
+    public void setBeanForList() {
+        ClassPathXmlApplicationContext ioc = new ClassPathXmlApplicationContext("beans.xml");
+        Master master = ioc.getBean("master", Master.class);
+        System.out.println(master);
+    }
+
+    @Test
+    public void setBeanByInner() {
+        // 1.创建容器 ApplicationContext
+        // 2.该容器和容器配置文件关联
+        ClassPathXmlApplicationContext ioc = new ClassPathXmlApplicationContext("beans.xml");
+        // 3.直接传入class对象
+        MemberServiceImpl memberService = ioc.getBean("memberService2", MemberServiceImpl.class);
+        memberService.add();
+    }
+
+    @Test
+    public void setBeanByRef() {
+        // 1.创建容器 ApplicationContext
+        // 2.该容器和容器配置文件关联
+        ClassPathXmlApplicationContext ioc = new ClassPathXmlApplicationContext("beans.xml");
+        // 3.直接传入class对象
+        MemberServiceImpl memberService = ioc.getBean("memberService", MemberServiceImpl.class);
+        memberService.add();
+    }
+
+    @Test
+    public void getBeanByP() {
+        // 1.创建容器 ApplicationContext
+        // 2.该容器和容器配置文件关联
+        ClassPathXmlApplicationContext ioc = new ClassPathXmlApplicationContext("beans.xml");
+        // 3.直接传入class对象
+        Monster bean = ioc.getBean("monster06", Monster.class);
+        System.out.println(bean);
+    }
+
+    @Test
+    public void getBeanByType() {
+        // 1.创建容器 ApplicationContext
+        // 2.该容器和容器配置文件关联
+        ClassPathXmlApplicationContext ioc = new ClassPathXmlApplicationContext("beans.xml");
+        // 3.直接传入class对象
+        Monster bean = ioc.getBean(Monster.class);
+    }
+
+    @Test
+    public void setBeanByConstructor() {
+        // 1.创建容器 ApplicationContext
+        // 2.该容器和容器配置文件关联
+        ClassPathXmlApplicationContext ioc = new ClassPathXmlApplicationContext("beans.xml");
+        // 3.直接传入class对象
+        Object bean = ioc.getBean("monster03", Monster.class);
+        System.out.println(bean);
+    }
+
     @Test
     public void getMonster() {
         // 1.创建容器 ApplicationContext
