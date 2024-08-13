@@ -370,7 +370,30 @@ kill=\u72EE\u5B50\u543C
     </bean>	
 ```
 
+### 1.6.3 基于注解配置Bean
 
+<font color="red">@Component 表示当前注解标识是一个组件</font>										
+
+<font color="red">@Controller 表示当前注解是一个控制器，常用于Servlet</font>								
+
+<font color="red">@Service 表示当前注解是一个业务逻辑处理类，通常用于Service类</font>				
+
+<font color="red">@Respository 表示当前注解标识的是一个持久化层类，通常用于Dao类</font>
+
+```xml
+    <!--    配置容器需要扫描的包    
+    1.component-scan 表示要对指定的包下面的类进行扫描，并创建对象到容器中
+    2.base-package 表示指定要扫描的包是哪一个
+    3.含义：当Spring容器创建/初始化时，会扫描base-package下的所有带有注解的类，将其实例化，生成对象，放入容器
+    -->
+    <context:component-scan base-package="com.wpt.spring.component"/>
+```
+
+**注意事项：**
+
+(1) 可以通过通配符 * 指定扫描指定路径下的所有包
+
+(2) 例如**<context:component-scan base-package="com.wpt.spring.component"/>**会扫描component包及其子包下的所有类
 
 ## 1.7 Bean的生命周期
 
@@ -427,4 +450,212 @@ bean的创建是由JVM完成的，执行如下方法：
 ![image-20240731224617440](image-20240731224617440.png)
 
 ## 1.9 自动装配Bean
+
+```xml
+  <!--自动装配
+    1.autowire="byType" 表示，在创建orderService时通过类型给对象的属性 自动完成赋值/引用
+    2.例如，orderService有 private OrderDao orderDao  属性，会在容器中找有没有一个orderDao类型的对象
+        如果有进行自动装配；
+    3.如果使用autowire="byType"进行自动装配容器中不能有两个及以上的同类型对象
+    -->
+    <bean class="com.wpt.spring.dao.OrderDao" id="orderDao"/>
+    <bean autowire="byType" class="com.wpt.spring.service.OrderService" id="orderService"/>
+    <bean autowire="byType" class="com.wpt.spring.web.OrderAction" id="orderAction"/>
+```
+
+```xml
+  <!--自动装配
+      1.autowire="byName" 表示，在创建orderService时通过名字给对象的属性 自动完成赋值/引用
+      2.例如，autowire="byName" class="com.wpt.spring.service.OrderService"
+      Spring容器:
+      1) OrderService属性  private OrderDao orderDao;
+      2) 再根据属性的setXXX()方法 XXX 找对象id
+      3) public void setOrderDao(OrderDao orderDao)  就会找 id = orderDao对象来自动装配
+      4) 没有就装配失败
+      -->
+    <bean class="com.wpt.spring.dao.OrderDao" id="orderDao"/>
+    <bean autowire="byName" class="com.wpt.spring.service.OrderService" id="orderService"/>
+    <bean autowire="byName" class="com.wpt.spring.web.OrderAction" id="orderAction"/>
+```
+
+## 1.10 手动实现Spring注解配置Bean
+
+![image-20240801210952446](image-20240801210952446.png)
+
+1.搭建基本结构并获取扫描的包
+
+2.获取包下的所有class文件
+
+3.通过反射生成对象，并放入容器中保存
+
+## 1.10 自动装配
+
+### 1.10.1 @AutoWired注解
+
+(1) 在 IOC 容器中查找待装配的组件的类型，如果有唯一的 bean 匹配，则使用该 bean 装
+配
+
+(2) 如待装配的类型对应的 bean 在 IOC 容器中有多个，则使用待装配的属性的属性名作
+为 id 值再进行查找, 找到就装配，找不到就抛异常
+
+### 1.10.2 @Resource注解
+
+（1）@Resource 有两个属性是比较重要的,分是 name 和 type。
+
+Spring 将@Resource 注解的name 属性解析为 bean 的名字,而 type 属性则解析为 bean 的类型
+
+如果使用 name 属性,则使用 byName 的自动注入策略,而使用 type 属性时则使用 byType 自动注入策略
+
+（2）如果@Resource 没有指定 name 和 type ,则先使用byName注入策略, 如果匹配不上,
+再使用 byType 策略, 如果都不成功，就会报错
+
+```java
+@Resource(name = "userService300")
+// @Resource(name = "userService300")表示为userService属性装配id = userService300的bean对象
+private UserService userService400;
+```
+
+```java
+@Resource(type = "UserService.class")
+// 使用@Resource(type = "UserService.class")进行装配，要求容器中有唯一一个UserService类型的对象
+private UserService userService;
+```
+
+## 1.11 泛型依赖注入
+
+为了更好的管理有继承和相互依赖的Bean的自动装配，Spring还提供基于泛型依赖的注入机制
+
+# 2 AOP
+
+## 2.1 动态代理
+
+需求：
+
+<img src="image-20240805210104672.png" alt="image-20240805210104672" style="zoom: 67%;" />
+
+普通方法：
+
+(1) 写Vehicle接口
+
+(2) 创建Car/Ship类并实现Vehicle接口
+
+(3) 调用方法
+
+动态代理：
+
+动态绑定+反射
+
+```java
+package com.wpt.spring.proxy2;/**
+ * @author wpt@onlying.cn
+ * @date 2024/8/5 21:18
+ */
+
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+
+/**
+ * @projectName: spring
+ * @package: com.wpt.spring.proxy2
+ * @className: VehicleProxyProvider
+ * @author: wpt
+ * @description: 该类可以提供一个方法，返回一个代理对象
+ * @date: 2024/8/5 21:18
+ * @version: 1.0
+ */
+public class VehicleProxyProvider {
+
+    // 定义属性，使用target_vehicle表示真正执行的对象，实现了Vehicle接口
+    private Vehicle target_vehicle;
+
+    //构造器
+    public VehicleProxyProvider(Vehicle target_vehicle) {
+        this.target_vehicle = target_vehicle;
+    }
+    // 编写一个方法可以返回一个代理对象
+
+    /*
+     *
+     *    public static Object newProxyInstance(ClassLoader loader,
+     *                                           Class<?>[] interfaces,
+     *                                           InvocationHandler h)
+     *         throws IllegalArgumentException
+     * 1.ClassLoader loader:类加载器
+     * 2.Class<?>[] interfaces:将来要代理的对象的接口信息
+     * 3.InvocationHandler h  调用处理器、对象，内部有invoke方法
+     */
+    public Vehicle getProxy() {
+        // 得到类加载器
+        ClassLoader classLoader = target_vehicle.getClass().getClassLoader();
+        // 得到接口信息
+        Class<?>[] interfaces = target_vehicle.getClass().getInterfaces();
+        // 创建  InvocationHandler h
+        InvocationHandler invocationHandler = new InvocationHandler() {
+            /**
+             *
+             * @param proxy 代理对象
+             *
+             * @param method 通过dialing对象调用方法时，的哪个方法
+             *
+             * @param args 表示，通过代理对象调用方法时传入的参数
+
+             * @return 返回值是代理对象调用方法的返回值
+             * @throws Throwable
+             */
+            @Override
+            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+
+                System.out.println("交通工具开始运行了....");
+                // method 是  public abstract void com.wpt.spring.proxy2.Vehicle.run()
+                // target_vehicle 是 Ship对象
+                Object result = method.invoke(target_vehicle, args);
+                System.out.println("交通工具停止运行了....");
+
+                return result;
+            }
+        };
+        Vehicle proxy = (Vehicle) Proxy.newProxyInstance(classLoader, interfaces, invocationHandler);
+        return proxy;
+    }
+}
+
+```
+
+### 2.2.1 动态代理深入--横向切入点
+
+```java
+public SmartAnimalable getProxy() {
+        ClassLoader classLoader = target_obj.getClass().getClassLoader();
+        Class<?>[] interfaces = target_obj.getClass().getInterfaces();
+        InvocationHandler invocationHandler = new InvocationHandler() {
+            @Override
+            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                Object result = null;
+                try {
+                    System.out.println("方法执行前-日志-方法名  " + method.getName() + "-参数" +
+                            Arrays.asList(args));//从AOP看，就是一个横切关注点--前置通知
+                    result = method.invoke(target_obj, args);
+                    System.out.println("方法执行前-日志-方法名  " + method.getName() +
+                            "-结果result=" + result);//从AOP看，就是一个横切关注点--返回通知
+
+                } catch (Exception e) {
+                    // 如果反射执行方法是出现了异常，进入catch块
+                    e.printStackTrace();
+                    System.out.println("方法执行异常-日志-方法名-" + method.getName()
+                            + "异常类型_" + e.getClass().getName());//从AOP看，就是一个横切关注点--异常通知
+                } finally {//不管是否出现异常，最终都会执行到finally代码块
+                    System.out.println("方法最终结束-日志-方法名" + method.getName());//从AOP看，就是一个横切关注点--最终通知
+                }
+                return result;
+            }
+        };
+        SmartAnimalable smartAnimalable = (SmartAnimalable) Proxy.newProxyInstance(classLoader, interfaces, invocationHandler);
+        return smartAnimalable;
+    }
+```
+
+### 2.1.2 动态代理问题
+
+在上面的MyProvider.java中，输出功能较弱，实际开发中可能是以方法的形式，嵌入到执行方法前
 

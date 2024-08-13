@@ -4,6 +4,10 @@ package com.wpt.spring.test;/**
  */
 
 import com.wpt.spring.bean.*;
+import com.wpt.spring.component.MyComponent;
+import com.wpt.spring.component.UserAction;
+import com.wpt.spring.component.UserDao;
+import com.wpt.spring.depinjection.PhoneService;
 import com.wpt.spring.service.MemberServiceImpl;
 import com.wpt.spring.web.OrderAction;
 import org.junit.Test;
@@ -21,6 +25,31 @@ import java.io.File;
  * @version: 1.0
  */
 public class SpringBeanTest {
+    @Test
+    public void setProByDependency(){
+        ClassPathXmlApplicationContext ioc = new ClassPathXmlApplicationContext("beans07.xml");
+        PhoneService phoneService = ioc.getBean("phoneService", PhoneService.class);
+        System.out.println(phoneService);
+        phoneService.save();
+
+    }
+    @Test
+    public void setBeanByAutowired(){
+        ClassPathXmlApplicationContext ioc = new ClassPathXmlApplicationContext("beans05.xml");
+        UserAction userAction = ioc.getBean("userAction", UserAction.class);
+        System.out.println("userAction = " + userAction);
+        userAction.sayOk();
+    }
+
+    @Test
+    public void setBeanByAnnotation(){
+        ClassPathXmlApplicationContext ioc = new ClassPathXmlApplicationContext("beans05.xml");
+        System.out.println("ok");
+        MyComponent myComponent = ioc.getBean("myComponent", MyComponent.class);
+        UserDao userDao = ioc.getBean(UserDao.class);
+        System.out.println(myComponent);
+        System.out.println(userDao);
+    }
 
     @Test
     public void setBeanByAutowire(){
