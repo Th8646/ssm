@@ -58,4 +58,11 @@ public class SmartAnimalAspect {
         System.out.println("f4切面类方法-最终执行完毕-日志-方法名  " + signature.getName());//从AOP看，就是一个横切关注点--返回通知
     }
 
+
+    @Before(value = "execution(public void com.wpt.spring.aop.aspectj.Car.run())")
+    public void ok(JoinPoint joinPoint){
+        Signature signature = joinPoint.getSignature();
+        System.out.println("切面类的ok方法--执行的目标方法---" + signature.getName());
+    }
+
 }

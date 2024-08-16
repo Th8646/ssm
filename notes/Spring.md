@@ -655,7 +655,167 @@ public SmartAnimalable getProxy() {
     }
 ```
 
-### 2.1.2 动态代理问题
+## 2.2 AOP原理
 
-在上面的MyProvider.java中，输出功能较弱，实际开发中可能是以方法的形式，嵌入到执行方法前
+![image-20240813002818877](image-20240813002818877.png)
+
+### 2.2.1 AOP使用图解
+
+![image-20240813003145625](image-20240813003145625.png)
+
+解读：
+
+(1) showBeginLog()方法理解成  切入方法
+
+(2) getSum方法表示目标方法
+
+(3) @Before表示把showBeginLog()切入到getSum()前执行
+
+(4) JoinPoint表示连接点，通过JoinPoint可以得到目标方法getSum()相关信息/方法签名、参数等
+
+## 2.3 AOP快速入门
+
+```java
+package com.wpt.spring.aop.aspectj;/**
+ * @author wpt@onlying.cn
+ * @date 2024/8/13 21:59
+ */
+
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.Signature;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.springframework.stereotype.Component;
+
+import java.lang.reflect.Method;
+import java.util.Arrays;
+
+/**
+ * @projectName: spring
+ * @package: com.wpt.spring.aop.aspectj
+ * @className: SmartAnimalableAspect
+ * @author: wpt
+ * @description: TODO
+ * @date: 2024/8/13 21:59
+ * @version: 1.0
+ */
+@Aspect
+@Component // 注入切面类到容器
+public class SmartAnimalAspect {
+    /**
+     * 1.@Before注解 表示是一个前置通知
+     * 2.value = "execution(public float com.wpt.spring.aop.aspectj.SmartDog.getSum(float, float))"
+     * 指定将f1方法切入哪个类的哪个方法  方法修饰符  返回类型  全类名.方法名(形参列表)
+     * 3.f1方法可以理解成一个切入方法 比如，showBeginLog等
+     * 4.JoinPoint joinPoint 在底层执行时，会给该切入方法一个 joinPoint对象，
+     * 通过该方法可以获取到相关信息
+     */
+    @Before(value = "execution(public float com.wpt.spring.aop.aspectj.SmartDog.getSum(float, float))")
+    public static void f1(JoinPoint joinPoint) {
+        //通过连接点对象，拿方法签名
+        Signature signature = joinPoint.getSignature();
+        System.out.println("f1切面类方法执行前-日志-方法名  " + signature.getName() + "-参数" +
+                Arrays.asList(joinPoint.getArgs()));//从AOP看，就是一个横切关注点--前置通知
+    }
+
+    public static void f2(Object result, Method method) {
+        System.out.println("after方法执行前-日志-方法名  " + method.getName() +
+                "-结果result=" + result);//从AOP看，就是一个横切关注点--返回通知
+    }
+
+}
+```
+
+```markdown
+注意事项：
+
+(1)切入表达式的更多配置，比如使用模糊配置
+	@Before(value="execution(* com.hspedu.aop.proxy.SmartDog.*(..))")
+	
+(2)表示所有访问权限，所有包的下所有有类的所方法，都会被执行该前置通知方法
+	@Before(value="execution(* *.*(..))")
+	
+(3)当 spring 容器开启了基于注解的AOP功能 <aop:aspectj-autoproxy/>,由于注入的对象.getClass() 已经是代理类型了，获取注入的对象, 需要以接口的类型来获取。                                                                                                                           
+```
+
+### 2.3.1 切入表达式
+
+```java
+execution([权限修饰符] [返回值类型] [简单类名/全类名] [方法名]([参数列表]))
+```
+
+注意事项：
+
+（1）切入表达式可以指向类的方法，此时切入表达式对类/对象生效
+
+（2）切入表达式可以指向接口的方法，会对实现了接口的类/对象生效
+
+（3）切入表达式可以对没有实现接口的类生效，进行切入
+
+示例
+
+没有实现接口的Car
+
+```java
+package com.wpt.spring.aop.aspectj;
+
+import org.springframework.stereotype.Component;
+
+@Component
+public class Car {
+
+    public void run(){
+        System.out.println("小汽车在running...");
+    }
+}
+```
+
+切面类配置对应的切面法
+
+```java
+package com.wpt.spring.aop.aspectj;
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.Signature;
+import org.aspectj.lang.annotation.*;
+import org.springframework.stereotype.Component;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+
+@Aspect
+@Component // 注入切面类到容器
+public class SmartAnimalAspect {
+    /**
+     * 1.@Before注解 表示是一个前置通知
+     * 2.value = "execution(public float com.wpt.spring.aop.aspectj.SmartDog.getSum(float, float))"
+     * 指定将f1方法切入哪个类的哪个方法  方法修饰符  返回类型  全类名.方法名(形参列表)
+     * 3.f1方法可以理解成一个切入方法 比如，showBeginLog等
+     * 4.JoinPoint joinPoint 在底层执行时，会给该切入方法一个 joinPoint对象，
+     * 通过该方法可以获取到相关信息
+     */
+    @Before(value = "execution(public void com.wpt.spring.aop.aspectj.Car.run())")
+    public void ok(JoinPoint joinPoint){
+        Signature signature = joinPoint.getSignature();
+        System.out.println("切面类的ok方法--执行的目标方法---" + signature.getName());
+    }
+
+}
+
+```
+
+执行结果：
+
+```java
+  @Test
+    public void carAspect() {
+        ApplicationContext ioc = new ClassPathXmlApplicationContext("beans08.xml");
+        Car car = ioc.getBean("car", Car.class);
+        //class com.wpt.spring.aop.aspectj.Car$$EnhancerBySpringCGLIB$$afc5eae4
+        System.out.println("car的运行类型："+car.getClass());
+        car.run();
+    }
+```
+
+![image-20240815233106775](image-20240815233106775.png)
+
+### 2.3.2 JoinPoint
 

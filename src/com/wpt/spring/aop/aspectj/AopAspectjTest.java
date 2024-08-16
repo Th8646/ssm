@@ -22,17 +22,26 @@ public class AopAspectjTest {
         // Spring容器
         ApplicationContext ioc = new ClassPathXmlApplicationContext("beans08.xml");
         SmartAnimalable smartAnimalable = ioc.getBean(SmartAnimalable.class);
-        smartAnimalable.getSum(10,2);
+        smartAnimalable.getSum(10, 2);
         System.out.println("smartAnimalable的运行类型是：" + smartAnimalable.getClass());
     }
 
     @Test
-    public void usbInterfaceAspect(){
+    public void usbInterfaceAspect() {
         ApplicationContext ioc = new ClassPathXmlApplicationContext("beans08.xml");
-        UsbInterface bean = ioc.getBean("phone",UsbInterface.class);
-        UsbInterface bean2 = ioc.getBean("camera",UsbInterface.class);
+        UsbInterface bean = ioc.getBean("phone", UsbInterface.class);
+        UsbInterface bean2 = ioc.getBean("camera", UsbInterface.class);
 
         bean.work();
         bean2.work();
+    }
+
+    @Test
+    public void carAspect() {
+        ApplicationContext ioc = new ClassPathXmlApplicationContext("beans08.xml");
+        Car car = ioc.getBean("car", Car.class);
+        //class com.wpt.spring.aop.aspectj.Car$$EnhancerBySpringCGLIB$$afc5eae4
+        System.out.println("car的运行类型："+car.getClass());
+        car.run();
     }
 }
