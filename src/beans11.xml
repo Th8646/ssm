@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/aop https://www.springframework.org/schema/aop/spring-aop.xsd">
+    <!--配置MyCalAopBean-->
+    <bean class="com.wpt.spring.aop.homework.xml.MyCalAop" id="myCalAop"/>
+
+    <bean class="com.wpt.spring.aop.homework.xml.MyCal" id="myCal"/>
+    <!--    配置切面类-->
+    <aop:config>
+        <!--        配置切入点表达式-->
+        <aop:pointcut id="myPointCut" expression="execution(public int com.wpt.spring.aop.homework.xml.MyCal.*(int))"/>
+        <!--        配置切入对象-->
+        <aop:aspect ref="myCalAop">
+            <aop:before method="showBeginLog" pointcut-ref="myPointCut"/>
+            <aop:after-returning method="calEndLog" pointcut-ref="myPointCut"/>
+        </aop:aspect>
+    </aop:config>
+
+</beans>

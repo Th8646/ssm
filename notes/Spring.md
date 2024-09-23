@@ -817,5 +817,204 @@ public class SmartAnimalAspect {
 
 ![image-20240815233106775](image-20240815233106775.png)
 
-### 2.3.2 JoinPoint
+## 2.4 手动实现Spring容器和AOP
+
+### 2.4.1 类加载器
+
+类型：
+
+Bootstrap类加载器-----对应路径jre/lib
+
+Ext类加载器 -------对应路径jre/lib/ext
+
+App类加载器-------对应路径classpath
+
+### 2.4.2 扫描包得到bean
+
+1.搭建基本结构并获取扫描的包
+
+2.获取包下的所有class文件
+
+3.通过反射生成对象，并放入容器中保存
+
+![image-20240801210952446](image-20240801210952446.png)
+
+### 2.4.3 将扫描的bean信息封装到BeanDefinition对象并存入Map
+
+1.创建注解Scope，用于指定是单例还是多实例
+
+```java
+package com.wpt.spring.annotation;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Scope {
+    String value() default "";
+}
+
+```
+
+2.创建BeanDefinition存储对象信息
+
+```java
+package com.wpt.spring.ioc;
+/**
+ * @author: wpt
+ * @description: 用于记录Bean的信息  [1. scope、  2.Bean对应的Class对象，反射可以生成对应的对象]
+ */
+public class BeanDefinition {
+    private String scope;
+    private Class clazz;
+
+    public String getScope() {
+        return scope;
+    }
+
+    public void setScope(String scope) {
+        this.scope = scope;
+    }
+
+    public Class getClazz() {
+        return clazz;
+    }
+
+    public void setClazz(Class clazz) {
+        this.clazz = clazz;
+    }
+
+    @Override
+    public String toString() {
+        return "BeanDefinition{" +
+                "scope='" + scope + '\'' +
+                ", clazz=" + clazz +
+                '}';
+    }
+}
+
+```
+
+3.获取bean的信息放入map
+
+```java
+package com.wpt.spring.ioc;/**
+ * @author wpt@onlying.cn
+ * @date 2024/8/26 23:39
+ */
+
+import com.wpt.spring.annotation.Component;
+import com.wpt.spring.annotation.ComponentScan;
+import com.wpt.spring.annotation.Scope;
+import org.apache.commons.lang.StringUtils;
+
+import java.io.File;
+import java.net.URL;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * @projectName: spring
+ * @package: com.wpt.spring.ioc
+ * @className: WptSpringApplicationContext
+ * @author: wpt
+ * @description: TODO
+ * @date: 2024/8/26 23:39
+ * @version: 1.0
+ */
+public class WptSpringApplicationContext {
+    private Class configClass;
+    private ConcurrentHashMap<String, BeanDefinition> beanDefinitionHashMap = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, Object> singletonObjects = new ConcurrentHashMap<>();
+
+    public WptSpringApplicationContext(Class configClass) {
+        this.configClass = configClass;
+        //定义属性BeanDefinitionMap---存放BeanDefinition对象
+
+
+        //获取要扫描的包
+        //1.得到配置类的注解  @ComponentScan(value = "com.wpt.spring.component")
+        ComponentScan componentScan = (ComponentScan) this.configClass.getDeclaredAnnotation(ComponentScan.class);
+        //2.通过componentScan得到value----要扫描的包
+        String path = componentScan.value();
+        System.out.println("要扫描的包 = " + path);
+
+        // 获取扫描包下所有的class文件
+        // 1.得到类的加载器
+        ClassLoader classLoader = WptSpringApplicationContext.class.getClassLoader();
+        path = path.replace(".", "/");
+        // 2.通过类加载器，获取要扫描包的url
+        URL resource = classLoader.getResource(path);
+        System.out.println("resource = " + resource);
+        // 3.遍历获取路径下所有class文件---IO
+        File file = new File(resource.getFile());
+        if (file.isDirectory()) {
+            File[] files = file.listFiles();
+            for (File f : files) {
+//                System.out.println("===============================");
+//                D:\wpt_spring\spring\spring\out\production\spring\com\wpt\spring\component\UserService.class
+                //System.out.println(f.getAbsolutePath());
+                //获取全类名 反射对象
+                String fileAbsolutePath = f.getAbsolutePath();
+                // 过滤筛选
+                if (fileAbsolutePath.endsWith(".class")) {
+                    // 1.获取全类名
+                    String className = fileAbsolutePath.substring(fileAbsolutePath.lastIndexOf("\\") + 1, fileAbsolutePath.indexOf(".class"));
+                    //System.out.println(className);
+                    path = path.replace("/", ".");
+                    String classFullName = path.concat("." + className);
+                    //System.out.println(classFullName);
+                    // 2.判断该.class文件是否进行注入
+                    try {
+                        // 得到了该类的Class对象
+                        Class<?> clazz = classLoader.loadClass(classFullName);
+                        if (clazz.isAnnotationPresent(Component.class)) {
+                            System.out.println("这是一个Spring-Bean" + clazz + "  类名=" + className);
+                            // 1，得到Component注解
+                            Component component = clazz.getDeclaredAnnotation(Component.class);
+                            // 2.配置value的值
+                            String beanName = component.value();
+                                    //没有初始值，默认使用首字母小写命名
+                            if (beanName.equals("")){
+                                //将该类的类名首字母小写作为beanName
+                                beanName = StringUtils.uncapitalize(className);
+                            }
+                            // 3.将bean的信息封装到BeanDefinition对象--放入BeanDefinitionMap
+                            BeanDefinition beanDefinition = new BeanDefinition();
+                            beanDefinition.setClazz(clazz);
+                            // 4.获取Scope值
+                            if (clazz.isAnnotationPresent(Scope.class)) {
+                                Scope scope = clazz.getDeclaredAnnotation(Scope.class);
+                                beanDefinition.setScope(scope.value());
+                            } else {
+                                // 没有配置，默认单例
+                                beanDefinition.setScope("singleton");
+                            }
+                            // 5.将beanDefinition放入Map
+                            beanDefinitionHashMap.put(beanName,beanDefinition);
+
+                        } else {
+                            System.out.println("不是一个Spring-Bean" + clazz + "   类名=" + className);
+                        }
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                System.out.println("--------------------------------------");
+
+
+            }
+        }
+    }
+
+    public Object getBean(String name) {
+        return null;
+    }
+}
+
+```
+
+2.4.4 进行getBean和creatBean
 

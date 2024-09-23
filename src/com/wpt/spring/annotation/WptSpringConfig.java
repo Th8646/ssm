@@ -14,4 +14,5 @@ package com.wpt.spring.annotation;/**
  */
 @ComponentScan(value = "com.wpt.spring.component")
 public class WptSpringConfig {
+
 }
